@@ -92,12 +92,10 @@ impl Individual {
                     let inc_2 = i == 0 || (i > 0 && tup.0[i] <= tup.0[i-1] + 1);
                     // Total cannot be more than 155
                     let inc_3 = total < 155;
-                    // Cannot be greater than 4 if lower half, or ever more than 8
-                    let inc_4 = if i <= 3 {
-                        tup.0[i] < 4
-                    } else {
-                        tup.0[i] < 8
-                    };
+                    // Lowest number must be 1 to 4
+                    let inc_4 = i > 0 || tup.0[i] < 4;
+                    // Cannot be greater than 8
+                    let inc_5 = tup.0[i] < 8;
 
                     // Cannot decrement to be less than previous number
                     let dec_1 = i == 0 || (i > 0 && tup.0[i] > tup.0[i-1]);
@@ -105,20 +103,18 @@ impl Individual {
                     let dec_2 = i == 7 || (i < 7 && tup.0[i] >= tup.0[i+1] - 1);
                     // Total cannot be less than 145
                     let dec_3 = total > 145;
-                    // Cannot be less than 5 if upper half, or ever less than 1
-                    let dec_4 = if i >= 4 {
-                        tup.0[i] > 5
-                    } else {
-                        tup.0[i] > 1
-                    };
+                    // Highest number must be 5 to 8
+                    let dec_4 = i < 7 || tup.0[i] > 5;
+                    // Cannot be less than 1
+                    let dec_5 = tup.0[i] > 1;
 
                     possibilities.push(0);
                     // Can we increment
-                    if cond && inc_1 && inc_2 && inc_3 && inc_4 {
+                    if cond && inc_1 && inc_2 && inc_3 && inc_4 && inc_5 {
                         possibilities.push(1);
                     }
                     // Can we decrement
-                    if cond && dec_1 && dec_2 && dec_3 && dec_4 {
+                    if cond && dec_1 && dec_2 && dec_3 && dec_4 && dec_5 {
                         possibilities.push(-1);
                     }
 
@@ -185,17 +181,13 @@ impl Individual {
                     // cant be less than previous number
                     && dec_tup.0[dec_tup.1] > dec_tup.0[dec_tup.1 - 1]
                     // cant be two less than next number
-                    && dec_tup.0[dec_tup.1] >= dec_tup.0[dec_tup.1 + 1] - 1
-                    // cant have an upper number be less than 5
-                    && (dec_tup.1 <= 3 || dec_tup.0[dec_tup.1] >= 6);
+                    && dec_tup.0[dec_tup.1] >= dec_tup.0[dec_tup.1 + 1] - 1;
 
                 let can_inc = inc_tup.0[inc_tup.1] < 6
                     // cant be greater than next number
                     && inc_tup.0[inc_tup.1] < inc_tup.0[inc_tup.1 + 1]
                     // cant be two greater than previous number
-                    && inc_tup.0[inc_tup.1] <= inc_tup.0[inc_tup.1 - 1] + 1
-                    // cant have a lesser number greater than 4
-                    && (inc_tup.1 == 4 || inc_tup.0[inc_tup.1] < 4);
+                    && inc_tup.0[inc_tup.1] <= inc_tup.0[inc_tup.1 - 1] + 1;
 
                 if can_dec && can_inc {
                     stats.get_mut(&attrs[0]).unwrap().0[dec_idx] -= 1;
