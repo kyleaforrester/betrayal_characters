@@ -1,5 +1,5 @@
-use std::cmp;
 use rand::prelude::SliceRandom;
+use std::cmp;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -17,7 +17,6 @@ pub struct Individual {
 
 impl Individual {
     pub fn new(x: i32, y: i32, id: usize, rankings: &HashMap<String, Vec<String>>) -> Individual {
-        
         let mut chars = HashMap::new();
         for name in rankings.get("Might").unwrap().iter() {
             let mut stats: HashMap<String, (Vec<i32>, usize)> = HashMap::new();
@@ -45,8 +44,14 @@ impl Individual {
         ind
     }
 
-    pub fn breed(parent_a: &Individual, parent_b: &Individual, x: i32, y: i32, id: usize, rankings: &HashMap<String, Vec<String>>) -> Individual {
-
+    pub fn breed(
+        parent_a: &Individual,
+        parent_b: &Individual,
+        x: i32,
+        y: i32,
+        id: usize,
+        rankings: &HashMap<String, Vec<String>>,
+    ) -> Individual {
         let mut chars = HashMap::new();
         for name in parent_a.chars.keys() {
             let character = if rand::random() {
@@ -93,9 +98,9 @@ impl Individual {
                     let cond = i != tup.1;
 
                     // Cannot increment to be larger than next number
-                    let inc_1 = i == 7 || (i < 7 && tup.0[i] < tup.0[i+1]);
+                    let inc_1 = i == 7 || (i < 7 && tup.0[i] < tup.0[i + 1]);
                     // Cannot increment to more than 2 from previous number
-                    let inc_2 = i == 0 || (i > 0 && tup.0[i] <= tup.0[i-1] + 1);
+                    let inc_2 = i == 0 || (i > 0 && tup.0[i] <= tup.0[i - 1] + 1);
                     // Total cannot be more than 155
                     let inc_3 = total < 155;
                     // Lowest number must be 1 to 4
@@ -104,9 +109,9 @@ impl Individual {
                     let inc_5 = tup.0[i] < 8;
 
                     // Cannot decrement to be less than previous number
-                    let dec_1 = i == 0 || (i > 0 && tup.0[i] > tup.0[i-1]);
+                    let dec_1 = i == 0 || (i > 0 && tup.0[i] > tup.0[i - 1]);
                     // Cannot decrement to be more than 2 less than next number
-                    let dec_2 = i == 7 || (i < 7 && tup.0[i] >= tup.0[i+1] - 1);
+                    let dec_2 = i == 7 || (i < 7 && tup.0[i] >= tup.0[i + 1] - 1);
                     // Total cannot be less than 145
                     let dec_3 = total > 145;
                     // Highest number must be 5 to 8
@@ -131,12 +136,15 @@ impl Individual {
             }
 
             // Mutate the indexes.
-            // Find a pair of attributes 
+            // Find a pair of attributes
             // See which pairs of [3, 4, 5] of each could work
             // Then pick one.
             // 20% chance of happening.
             if rand::random::<f32>() < 0.2 {
-                let attrs: Vec<String>= ["Might", "Know", "Speed", "Sanity"].choose_multiple(&mut rng, 2).map(|x| x.to_string()).collect();
+                let attrs: Vec<String> = ["Might", "Know", "Speed", "Sanity"]
+                    .choose_multiple(&mut rng, 2)
+                    .map(|x| x.to_string())
+                    .collect();
                 let mut possibilities = Vec::new();
                 for i in -1i32..2 {
                     for j in -1i32..2 {
@@ -176,7 +184,10 @@ impl Individual {
             // Find a pair of starting values that can increment/decrement together
             // Only has a small chance of happening.  20% chance of checking for this.
             if rand::random::<f32>() < 0.2 {
-                let attrs: Vec<String>= ["Might", "Know", "Speed", "Sanity"].choose_multiple(&mut rng, 2).map(|x| x.to_string()).collect();
+                let attrs: Vec<String> = ["Might", "Know", "Speed", "Sanity"]
+                    .choose_multiple(&mut rng, 2)
+                    .map(|x| x.to_string())
+                    .collect();
                 let dec_tup = stats.get(&attrs[0]).unwrap();
                 let inc_tup = stats.get(&attrs[1]).unwrap();
 
@@ -204,7 +215,6 @@ impl Individual {
     }
 
     fn valid_indexes(stats: HashMap<String, (Vec<i32>, usize)>) -> bool {
-
         // Indexes are all >= 2 and <= 4
         if !stats.values().all(|x| x.1 >= 2 && x.1 <= 4) {
             return false;
@@ -232,8 +242,12 @@ impl Individual {
         let mut names: Vec<String> = self.chars.keys().map(|x| x.to_string()).collect();
         for tup in rankings.iter() {
             // Sort in descending order based on the f32 output of the stat
-            names.sort_by(|a, b| Individual::attr_score(self, b, tup.0).partial_cmp(&Individual::attr_score(self, a, tup.0)).unwrap());
-            
+            names.sort_by(|a, b| {
+                Individual::attr_score(self, b, tup.0)
+                    .partial_cmp(&Individual::attr_score(self, a, tup.0))
+                    .unwrap()
+            });
+
             for name in names.iter() {
                 let true_idx = tup.1.iter().position(|x| x == name).unwrap();
                 let my_idx = names.iter().position(|x| x == name).unwrap();
@@ -245,10 +259,14 @@ impl Individual {
         // Keep average of other 3 traits to around 4
         let mut avg_score = 0;
         for attr in rankings.keys() {
-            let my_sum: i32= self.chars.values().map(|x| {
-                let tup = x.get(attr).unwrap();
-                tup.0[tup.1]
-            } ).sum();
+            let my_sum: i32 = self
+                .chars
+                .values()
+                .map(|x| {
+                    let tup = x.get(attr).unwrap();
+                    tup.0[tup.1]
+                })
+                .sum();
             let my_avg = my_sum as f32 / (self.chars.keys().count() as f32);
             if attr == "Might" {
                 avg_score += ((my_avg - 3.0).abs() * 10.0) as i32;
@@ -260,8 +278,16 @@ impl Individual {
         // Make for more interesting diversity by:
         // 1) Increase  extremist 4 indexes, up to half the population
         // 2) Balance 10 and 11 index totals
-        let four_indexes = self.chars.values().map(|x| x.values().filter(|tup| tup.1 == 4).count()).sum::<usize>();
-        let ten_totals = self.chars.values().filter(|x| x.values().map(|tup| tup.1).sum::<usize>() == 10).count();
+        let four_indexes = self
+            .chars
+            .values()
+            .map(|x| x.values().filter(|tup| tup.1 == 4).count())
+            .sum::<usize>();
+        let ten_totals = self
+            .chars
+            .values()
+            .filter(|x| x.values().map(|tup| tup.1).sum::<usize>() == 10)
+            .count();
         let eleven_totals = self.chars.len() - ten_totals;
         let totals_diff = cmp::max(ten_totals, eleven_totals) - cmp::min(ten_totals, eleven_totals);
         let diversity = totals_diff - cmp::min(four_indexes, self.chars.len() / 2);
@@ -280,12 +306,12 @@ impl Individual {
         let mut weight: f32 = 0.5;
         let mut offset = 1;
         while offset <= tup.1 {
-            weighted_sum += (tup.0[tup.1 - offset] + tup.0[cmp::min(tup.1 + offset, 7)]) as f32 * weight;
+            weighted_sum +=
+                (tup.0[tup.1 - offset] + tup.0[cmp::min(tup.1 + offset, 7)]) as f32 * weight;
             weight *= 0.5;
             offset += 1;
         }
 
         weighted_sum
     }
-
 }

@@ -1,10 +1,10 @@
-use std::fs;
-use std::cmp;
-use std::io::{self, Read, Write};
-use std::collections::{HashMap, HashSet};
 use individual::Individual;
-use rand::Rng;
 use rand::prelude::SliceRandom;
+use rand::Rng;
+use std::cmp;
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::io::{self, Write};
 
 mod individual;
 
@@ -58,14 +58,22 @@ impl Population {
 
                 // Allow the grid of individuals to be borderless.  The edges are connected to each
                 // other.
-                let h_w = self.window/2;
-                let mut cands: Vec<Individual> = self.pop.iter().filter(|i| (i.x >= x - h_w && i.x <= x + h_w)
-                                                   || (x + h_w > self.x_axis && i.x <= (x + h_w) % self.x_axis)
-                                                   || (x - h_w < 0 && i.x >= self.x_axis + x - h_w))
-                    .filter(|i| (i.y >= y - h_w && i.y <= y + h_w)
+                let h_w = self.window / 2;
+                let mut cands: Vec<Individual> = self
+                    .pop
+                    .iter()
+                    .filter(|i| {
+                        (i.x >= x - h_w && i.x <= x + h_w)
+                            || (x + h_w > self.x_axis && i.x <= (x + h_w) % self.x_axis)
+                            || (x - h_w < 0 && i.x >= self.x_axis + x - h_w)
+                    })
+                    .filter(|i| {
+                        (i.y >= y - h_w && i.y <= y + h_w)
                             || (y + h_w > self.y_axis && i.y <= (y + h_w) % self.y_axis)
-                            || (y - h_w < 0 && i.y >= self.y_axis + y - h_w))
-                    .cloned().collect();
+                            || (y - h_w < 0 && i.y >= self.y_axis + y - h_w)
+                    })
+                    .cloned()
+                    .collect();
 
                 if cands.len() < 4 {
                     continue;
@@ -83,9 +91,20 @@ impl Population {
 
                 // Breed the two best
                 for _i in 0..2 {
-                    let new_x = rng.gen_range(cmp::max(0, self.x_axis - h_w)..cmp::min(self.x_axis + h_w, self.x_axis));
-                    let new_y = rng.gen_range(cmp::max(0, self.y_axis - h_w)..cmp::min(self.y_axis + h_w, self.y_axis));
-                    self.pop.push(Individual::breed(&cands[0], &cands[1], new_x, new_y, self.counter, &self.rankings));
+                    let new_x = rng.gen_range(
+                        cmp::max(0, self.x_axis - h_w)..cmp::min(self.x_axis + h_w, self.x_axis),
+                    );
+                    let new_y = rng.gen_range(
+                        cmp::max(0, self.y_axis - h_w)..cmp::min(self.y_axis + h_w, self.y_axis),
+                    );
+                    self.pop.push(Individual::breed(
+                        &cands[0],
+                        &cands[1],
+                        new_x,
+                        new_y,
+                        self.counter,
+                        &self.rankings,
+                    ));
                     self.counter += 1;
                 }
                 break;
@@ -94,15 +113,20 @@ impl Population {
     }
 
     fn cull(&mut self, id: usize) {
-        self.pop.remove(self.pop.iter().enumerate().find(|x| x.1.id == id).unwrap().0);
+        self.pop.remove(
+            self.pop
+                .iter()
+                .enumerate()
+                .find(|x| x.1.id == id)
+                .unwrap()
+                .0,
+        );
     }
-
-
 }
 
 fn main() {
-
-    let buffer = fs::read_to_string(FILE).expect(format!("Could not read from FILE {}", FILE).as_str());
+    let buffer =
+        fs::read_to_string(FILE).expect(format!("Could not read from FILE {}", FILE).as_str());
 
     let mut rankings: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -121,14 +145,19 @@ fn main() {
 
     // Validate 4 categories present
     assert!(rankings.keys().count() == 4);
-    assert!(["Might", "Speed", "Know", "Sanity"].iter().all(|x| rankings.contains_key(*x)));
+    assert!(["Might", "Speed", "Know", "Sanity"]
+        .iter()
+        .all(|x| rankings.contains_key(*x)));
 
     // Validate all characters present in each category
     let set = HashSet::from_iter(rankings.values().nth(0).unwrap().iter());
     for v in rankings.values() {
         println!("{:?}", v);
     }
-    assert!(rankings.values().map(|x| HashSet::from_iter(x.iter())).all(|x: HashSet<&String>| x == set));
+    assert!(rankings
+        .values()
+        .map(|x| HashSet::from_iter(x.iter()))
+        .all(|x: HashSet<&String>| x == set));
 
     let mut pop = Population::new(rankings.clone());
     loop {
@@ -145,7 +174,9 @@ fn main() {
 
         print!("{}", prompt);
 
-        io::stdin().read_line(&mut choice).expect("Could not read from stdin!");
+        io::stdin()
+            .read_line(&mut choice)
+            .expect("Could not read from stdin!");
 
         match choice.trim() {
             "1" => pop = Population::new(rankings.clone()),
@@ -162,32 +193,34 @@ fn main() {
 
 fn run_generations(pop: &mut Population) {
     let mut response = String::new();
-    
+
     print!("How many generations to spawn? ");
     io::stdout().flush().unwrap();
 
-    io::stdin().read_line(&mut response).expect("Could not read from stdin!");
+    io::stdin()
+        .read_line(&mut response)
+        .expect("Could not read from stdin!");
 
     let gens: usize = match response.trim().parse() {
         Ok(num) => num,
         Err(e) => {
             println!("Not a recognized response: {}. Error: {}", response, e);
-            return
-        },
+            return;
+        }
     };
 
     pop.run(gens);
 }
 
-fn load_population(rankings: &HashMap<String, Vec<String>>) -> Population{
+fn load_population(rankings: &HashMap<String, Vec<String>>) -> Population {
     Population::new(rankings.clone())
 }
 
-fn save_population(pop: &Population) {
+fn save_population(_pop: &Population) {
     ()
 }
 
-fn save_individual(pop: &Population) {
+fn save_individual(_pop: &Population) {
     ()
 }
 
