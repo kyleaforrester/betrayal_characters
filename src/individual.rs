@@ -8,6 +8,8 @@ pub struct Individual {
     pub fitness: i32,
     rank_score: i32,
     avg_score: i32,
+    four_indexes: usize,
+    totals_diff: usize,
     pub x: i32,
     pub y: i32,
     chars: HashMap<String, HashMap<String, (Vec<i32>, usize)>>,
@@ -32,6 +34,8 @@ impl Individual {
             fitness: i32::MAX,
             rank_score: i32::MAX,
             avg_score: i32::MAX,
+            four_indexes: 0,
+            totals_diff: usize::MAX,
             x: x,
             y: y,
             chars: chars,
@@ -59,6 +63,8 @@ impl Individual {
             fitness: i32::MAX,
             rank_score: i32::MAX,
             avg_score: i32::MAX,
+            four_indexes: 0,
+            totals_diff: usize::MAX,
             x: x,
             y: y,
             chars: chars,
@@ -225,7 +231,8 @@ impl Individual {
         let mut rank_score = 0;
         let mut names: Vec<String> = self.chars.keys().map(|x| x.to_string()).collect();
         for tup in rankings.iter() {
-            names.sort_by_key(|x| 0-Individual::attr_score(self, x, tup.0));
+            // Sort in descending order based on the f32 output of the stat
+            names.sort_by(|a, b| Individual::attr_score(self, b, tup.0).partial_cmp(&Individual::attr_score(self, a, tup.0)).unwrap());
             
             for name in names.iter() {
                 let true_idx = tup.1.iter().position(|x| x == name).unwrap();
@@ -234,6 +241,8 @@ impl Individual {
             }
         }
 
+        // Keep average of Might to around 3
+        // Keep average of other 3 traits to around 4
         let mut avg_score = 0;
         for attr in rankings.keys() {
             let my_sum: i32= self.chars.values().map(|x| {
@@ -248,15 +257,35 @@ impl Individual {
             }
         }
 
+        // Make for more interesting diversity by:
+        // 1) Increase  extremist 4 indexes, up to half the population
+        // 2) Balance 10 and 11 index totals
+        let four_indexes = self.chars.values().map(|x| x.values().filter(|tup| tup.1 == 4).count()).sum::<usize>();
+        let ten_totals = self.chars.values().filter(|x| x.values().map(|tup| tup.1).sum::<usize>() == 10).count();
+        let eleven_totals = self.chars.len() - ten_totals;
+        let totals_diff = cmp::max(ten_totals, eleven_totals) - cmp::min(ten_totals, eleven_totals);
+        let diversity = totals_diff - cmp::min(four_indexes, self.chars.len() / 2);
+
         self.avg_score = avg_score;
         self.rank_score = rank_score;
-        self.fitness = avg_score + rank_score;
+        self.totals_diff = totals_diff;
+        self.four_indexes = four_indexes;
+        self.fitness = avg_score + rank_score + diversity as i32;
     }
 
-    fn attr_score(&self, name: &str, attr: &str) -> i32 {
+    fn attr_score(&self, name: &str, attr: &str) -> f32 {
         let tup = self.chars.get(name).unwrap().get(attr).unwrap();
 
-        return tup.0.iter().sum::<i32>() + 4 * tup.1 as i32 + 4 * tup.0[tup.1];
+        let mut weighted_sum = tup.0[tup.1] as f32;
+        let mut weight: f32 = 0.5;
+        let mut offset = 1;
+        while offset <= tup.1 {
+            weighted_sum += (tup.0[tup.1 - offset] + tup.0[cmp::min(tup.1 + offset, 7)]) as f32 * weight;
+            weight *= 0.5;
+            offset += 1;
+        }
+
+        weighted_sum
     }
 
 }
