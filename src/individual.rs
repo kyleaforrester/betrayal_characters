@@ -269,7 +269,7 @@ impl Individual {
                 .sum();
             let my_avg = my_sum as f32 / (self.chars.keys().count() as f32);
             if attr == "Might" {
-                avg_score += ((my_avg - 3.0).abs() * 10.0) as i32;
+                avg_score += ((my_avg - 3.25).abs() * 10.0) as i32;
             } else {
                 avg_score += ((my_avg - 4.0).abs() * 10.0) as i32;
             }
