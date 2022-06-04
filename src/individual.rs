@@ -198,7 +198,9 @@ impl Individual {
                     // cant be less than previous number
                     && dec_tup.0[dec_tup.1] > dec_tup.0[dec_tup.1 - 1]
                     // cant be two less than next number
-                    && dec_tup.0[dec_tup.1] >= dec_tup.0[dec_tup.1 + 1] - 1;
+                    && dec_tup.0[dec_tup.1] >= dec_tup.0[dec_tup.1 + 1] - 1
+                    // Speed, Sanity, Know must be at least 3
+                    && (attrs[0].as_str() == "Might" || dec_tup.0[dec_tup.1] > 3);
 
                 let can_inc = inc_tup.0[inc_tup.1] < 6
                     // cant be greater than next number
@@ -222,7 +224,6 @@ impl Individual {
 
         // Starting values sum to 15
         if stats.values().map(|x| x.0[x.1]).sum::<i32>() != 15 {
-            //println!("\tFail due to sum {:?}", stats);
             return false;
         }
 
@@ -233,7 +234,22 @@ impl Individual {
             return false;
         }
 
-        //println!("\tTrue {:?}", stats);
+        // Starting values are at least either 2 or 3
+        for stat in stats.iter() {
+            match stat.0.as_str() {
+                "Might" => {
+                    if stat.1 .0[stat.1 .1] < 2 {
+                        return false;
+                    }
+                }
+                _ => {
+                    if stat.1 .0[stat.1 .1] < 3 {
+                        return false;
+                    }
+                }
+            }
+        }
+
         true
     }
 
