@@ -1,7 +1,8 @@
 Might:
 Herman
-Madhav
 John
+Liam
+Madhav
 Sagar
 Kyle
 Shyam
@@ -16,11 +17,13 @@ Herman
 Anthony
 Sagar
 Kevin
+Liam
 Madhav
 
 Know:
 Madhav
 Kevin
+Liam
 Anthony
 Kyle
 Herman
@@ -29,11 +32,12 @@ John
 Sagar
 
 Sanity:
-Kevin
 Sagar
+Kevin
 Anthony
 Shyam
-John
 Madhav
+Liam
+John
 Kyle
 Herman
