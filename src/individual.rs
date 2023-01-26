@@ -321,9 +321,17 @@ impl Individual {
         let mut weighted_sum = tup.0[tup.1] as f32;
         let mut weight: f32 = 0.5;
         let mut offset = 1;
-        while offset <= tup.1 {
-            weighted_sum +=
-                (tup.0[tup.1 - offset] + tup.0[cmp::min(tup.1 + offset, 7)]) as f32 * weight;
+        // Keep adding offsets while there are unused numbers above or below the index
+        while offset <= tup.1 || offset + tup.1 <= 7 {
+            if offset > tup.1 {
+                // If offsetting into death, the lower number is considered 0 and not added
+                // Not possible for upper offset to be over 7
+                weighted_sum += tup.0[tup.1 + offset] as f32 * weight;
+            } else {
+                // If offsetting over the max index, reuse the max number
+                weighted_sum +=
+                    (tup.0[tup.1 - offset] + tup.0[cmp::min(tup.1 + offset, 7)]) as f32 * weight;
+            }
             weight *= 0.5;
             offset += 1;
         }
